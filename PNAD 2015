@@ -1,0 +1,258 @@
+## Análise de dados do PNAD 2015
+#link: https://ww2.ibge.gov.br/home/estatistica/populacao/trabalhoerendimento/pnad2015/microdados.shtm
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+dados = pd.read_csv('dados.csv')
+
+dados.head(10)
+
+## Definindo os intevalos das classes em reais
+classes = [
+    dados.Renda.min(),
+    2 * 788,
+    5 * 788,
+    15 * 788,
+    25 * 788,
+    dados.Renda.max()
+]
+classes
+
+## Definindo os labels das classes
+labels = ['E', 'D', 'C', 'B', 'A']
+
+## Definindo a coluna de frequências
+frequencia = pd.value_counts(
+  pd.cut(x = dados.Renda,
+         bins = classes,
+         labels = labels,
+         include_lowest = True)
+)
+frequencia
+
+## Definindo a coluna de percentuais
+percentual = pd.value_counts(
+  pd.cut(x = dados.Renda,
+         bins = classes,
+         labels = labels,
+         include_lowest = True),
+  normalize = True
+) * 100
+percentual
+
+## Criando o DF de colunas de frequência e percentuais
+dist_freq_renda = pd.DataFrame(
+    {'Frequência': frequencia, 'Porcentagem (%)': percentual}
+)
+dist_freq_renda.sort_index(ascending = False)
+
+## Gráfico de barras para visualizar as informações da tabela de frequências acima
+dist_freq_renda['Frequência'].plot.bar(width = 1, color = 'blue', alpha = 0.2, figsize=(14, 6))
+
+## Histograma para as variáveis IDADE, ALTURA, e RENDA
+ax = sns.distplot(dados['Idade'])
+ax.figure.set_size_inches(14, 6)
+ax.set_title('Distribuição de Frequências - IDADE', fontsize=18)
+ax.set_xlabel('Anos', fontsize=14)
+ax
+
+ax = sns.distplot(dados['Altura'])
+ax.figure.set_size_inches(14, 6)
+ax.set_title('Distribuição de Frequências - ALTURA', fontsize=18)
+ax.set_xlabel('Metros', fontsize=14)
+ax
+
+ax = sns.distplot(dados['Renda'])
+ax.figure.set_size_inches(14, 6)
+ax.set_title('Distribuição de Frequências - RENDA', fontsize=18)
+ax.set_xlabel('R$', fontsize=14)
+ax
+
+## Cruzamento das variáveis SEXO e COR
+sexo = {
+    0: 'Masculino', 
+    1: 'Feminino'
+}
+cor = {
+    0: 'Indígena', 
+    2: 'Branca', 
+    4: 'Preta', 
+    6: 'Amarela', 
+    8: 'Parda', 
+    9: 'Sem declaração'
+}
+anos_de_estudo = {
+    1: 'Sem instrução e menos de 1 ano', 
+    2: '1 ano', 
+    3: '2 anos', 
+    4: '3 anos', 
+    5: '4 anos', 
+    6: '5 anos', 
+    7: '6 anos', 
+    8: '7 anos', 
+    9: '8 anos', 
+    10: '9 anos', 
+    11: '10 anos', 
+    12: '11 anos', 
+    13: '12 anos', 
+    14: '13 anos', 
+    15: '14 anos', 
+    16: '15 anos ou mais', 
+    17: 'Não determinados'
+}
+uf = {
+    11: 'Rondônia', 
+    12: 'Acre', 
+    13: 'Amazonas', 
+    14: 'Roraima', 
+    15: 'Pará', 
+    16: 'Amapá', 
+    17: 'Tocantins', 
+    21: 'Maranhão', 
+    22: 'Piauí', 
+    23: 'Ceará', 
+    24: 'Rio Grande do Norte', 
+    25: 'Paraíba', 
+    26: 'Pernambuco', 
+    27: 'Alagoas', 
+    28: 'Sergipe', 
+    29: 'Bahia', 
+    31: 'Minas Gerais', 
+    32: 'Espírito Santo', 
+    33: 'Rio de Janeiro', 
+    35: 'São Paulo', 
+    41: 'Paraná', 
+    42: 'Santa Catarina', 
+    43: 'Rio Grande do Sul', 
+    50: 'Mato Grosso do Sul', 
+    51: 'Mato Grosso', 
+    52: 'Goiás', 
+    53: 'Distrito Federal'
+}
+
+frequencia = pd.crosstab(dados.Sexo,
+                         dados.Cor
+                        )
+frequencia.rename(index = sexo, inplace = True)
+frequencia.rename(columns = cor, inplace = True)
+frequencia
+
+percentual = pd.crosstab(dados.Sexo,
+                         dados.Cor,
+                         normalize = True
+                        ) * 100
+percentual.rename(index = sexo, inplace = True)
+percentual.rename(columns = cor, inplace = True)
+percentual
+
+## Análise descritiva da variável RENDA
+## Média aritimética
+dados.Renda.mean()
+
+## Mediana
+dados.Renda.median()
+
+## Moda
+dados.Renda.mode()[0]
+
+## Desvio médio absoluto
+dados.Renda.mad()
+
+## Variância
+dados.Renda.var()
+
+## Desvio-padrão
+dados.Renda.std()
+
+## Média, mediana e valor máximo da variável RENDA segundo SEXO e COR
+renda_estatisticas_por_sexo_e_cor = pd.crosstab(dados.Cor, 
+                                                dados.Sexo, 
+                                                values = dados.Renda, 
+                                                aggfunc = {'mean', 'median', 'max'})
+renda_estatisticas_por_sexo_e_cor.rename(index = cor, inplace = True)
+renda_estatisticas_por_sexo_e_cor.rename(columns = sexo, inplace = True)
+renda_estatisticas_por_sexo_e_cor
+
+## Medidas de dispersão da variável RENDA segundo SEXO e COR
+renda_dispersao_por_sexo_e_cor = pd.crosstab(dados.Cor, 
+                                         dados.Sexo,
+                                         aggfunc = {'mad', 'var', 'std'},
+                                         values = dados.Renda).round(2)
+renda_dispersao_por_sexo_e_cor.rename(index = cor, inplace = True)
+renda_dispersao_por_sexo_e_cor.rename(columns = sexo, inplace = True)
+renda_dispersao_por_sexo_e_cor
+
+## Box plot da variável RENDA segundo SEXO e COR
+ax = sns.boxplot(x = 'Renda', y = 'Cor', hue = 'Sexo', data=dados.query('Renda < 10000'), orient='h')
+
+ax.figure.set_size_inches(14, 8)    # Personalizando o tamanho da figura
+
+ax.set_title('Box-plot da RENDA por SEXO e COR', fontsize=18)    # Configurando o título do gráfico
+
+ax.set_xlabel('R$', fontsize=14)    # Configurando o label do eixo X
+
+ax.set_ylabel('Cor', fontsize=14)    # Configurando o label do eixo Y
+ax.set_yticklabels(['Indígena', 'Branca', 'Preta', 'Amarela', 'Parda', 'Sem declaração'], fontsize=12)    # Configurando o label de cada categoria do eixo Y
+
+# Configurações da legenda do gráfico (Sexo)
+handles, _ = ax.get_legend_handles_labels()
+ax.legend(handles, ['Masculino', 'Feminino'], fontsize=12)
+
+ax
+
+## Percentual de pessoas do dataset que ganham um salário mínimo (R$ 788,00) ou menos
+from scipy import stats
+
+percentual = stats.percentileofscore(dados.Renda, 788, kind = 'weak')
+print("{0:.2f}%".format(percentual))
+
+## Valor máximo ganho por 99% das pessoas do dataset
+valor = dados.Renda.quantile(.99)
+print("R$ {0:.2f}".format(valor))
+
+## Média, mediana, valor máximo e desvio-padrão da variável RENDA segundo ANOS DE ESTUDO e SEXO
+renda_estatisticas_por_sexo_e_estudo = pd.crosstab(dados['Anos de Estudo'], 
+                                         dados.Sexo,
+                                         aggfunc = {'mean', 'median', 'max', 'std'},
+                                         values = dados.Renda).round(2)
+renda_estatisticas_por_sexo_e_estudo.rename(index = anos_de_estudo, inplace = True)
+renda_estatisticas_por_sexo_e_estudo.rename(columns = sexo, inplace = True)
+renda_estatisticas_por_sexo_e_estudo
+
+## Box plot da variável RENDA segundo ANOS DE ESTUDO e SEXO
+ax = sns.boxplot(x = 'Renda', y = 'Anos de Estudo', hue = 'Sexo', data=dados.query('Renda < 10000 and Idade == 50'), orient='h')
+
+ax.figure.set_size_inches(14, 8)    # Personalizando o tamanho da figura
+
+ax.set_title('Box-plot da RENDA por SEXO e ANOS DE ESTUDO', fontsize=18)    # Configurando o título do gráfico
+
+ax.set_xlabel('R$', fontsize=14)    # Configurando o label do eixo X
+
+ax.set_ylabel('Anos de Estudo', fontsize=14)    # Configurando o label do eixo Y
+ax.set_yticklabels([key for key in anos_de_estudo.values()], fontsize=12)    # Configurando o label de cada categoria do eixo Y
+
+# Configurações da legenda do gráfico (Sexo)
+handles, _ = ax.get_legend_handles_labels()
+ax.legend(handles, ['Masculino', 'Feminino'], fontsize=12)
+
+ax
+
+## Média, mediana, valor máximo e desvio-padrão da variável RENDA segundo as UNIDADES DA FEDERAÇÃO
+renda_estatisticas_por_uf = dados.groupby(['UF']).agg({'Renda': ['mean', 'median', 'max', 'std']})
+renda_estatisticas_por_uf.rename(index = uf)
+
+## Box plot da variável RENDA segundo as UNIDADES DA FEDERAÇÃO
+ax = sns.boxplot(x = 'Renda', y = 'UF', data=dados.query('Renda < 10000'), orient='h')
+
+ax.figure.set_size_inches(14, 8)    # Personalizando o tamanho da figura
+
+ax.set_title('Box-plot da RENDA por ESTADOS', fontsize=18)    # Configurando o título do gráfico
+
+ax.set_xlabel('R$', fontsize=14)    # Configurando o label do eixo X
+
+ax.set_ylabel('Estados', fontsize=14)    # Configurando o label do eixo Y
+ax.set_yticklabels([key for key in uf.values()], fontsize=12)    # Configurando o label de cada categoria do eixo Y
+
+ax
