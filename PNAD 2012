@@ -1,0 +1,101 @@
+## Análise exploratória de dados do pnad 2012
+import pandas as pd
+import numpy as np
+
+pnad = pd.read_csv("https://github.com/neylsoncrepalde/introducao_ao_r/blob/master/dados/pes_2012.csv?raw=true")
+
+pnad.head()
+
+
+## Primeiras análises do dataset
+pnad.shape
+pnad['UF']
+pnad.V0302
+
+## Analisando variáveis qualitativas
+pnad.V0302.head() # primeiros casos
+pnad.V0302.tail() # últimos casos
+pnad.V0302.value_counts()
+pnad.V0302.value_counts() / pnad.shape[0]
+
+# Cor da pele
+pnad.V0404.value_counts() / pnad.shape[0]
+
+## Variáveis quantitativas
+
+# Idade
+pnad.V8005.head()
+pnad.V8005.mean()
+np.mean(pnad.V8005)
+pnad.V8005.median()
+pnad.V8005.var()
+pnad.V8005.std()
+pnad.V8005.describe()
+pnad.describe()
+
+# tipos de dados em cada coluna
+pnad.dtypes
+pnad.V4718.value_counts()
+
+# Transformar V4718 e V4720 em float
+pnad['V4718'] = pd.to_numeric(pnad['V4718'], errors='coerce')
+pnad['V4720'] = pd.to_numeric(pnad['V4720'], errors='coerce')
+pnad.describe()
+
+## Algumas análises
+# sexo x renda
+
+import matplotlib.pyplot as plt
+import seaborn as sns 
+
+sns.set(style='whitegrid')
+plt.scatter(pnad.V8005, pnad.V4720)
+plt.title("Interação entre idade e renda")
+plt.show()
+
+# Algumas análises visuais 
+# sexo
+sns.countplot(pnad.V0302)
+plt.title("Sexo")
+plt.xlabel("")
+plt.ylabel("Frequência")
+plt.show()
+ 
+# Cor da pele
+sns.countplot(pnad.V0404)
+plt.title("Cor da pele")
+plt.show()
+ 
+sns.countplot(pnad.V0302, hue=pnad.V0302)
+plt.show()
+ 
+sns.countplot(pnad.V0302, hue=pnad.V0404)
+plt.show()
+
+sns.boxplot(x=pnad.V0302, y=pnad.V4720)
+plt.ylim(0, 3000)
+plt.show()
+
+sns.boxplot(x=pnad.V0404, y=pnad.V4720)
+plt.ylim(0, 3000)
+plt.show()
+
+sns.boxplot(x=pnad.V0302, y=pnad.V4720, hue=pnad.V0404)
+plt.ylim(0, 3000)
+plt.show()
+
+## Tratando a variável renda de todos os trabalhadores
+amostra = pnad.loc[ (pnad.V8005 >= 18) & (pnad.V8005 <= 80) & (pnad.V4720 > 0) ]
+amostra.describe()
+
+# Estatísticas descritivas agrupadas 
+amostra.groupby('V0302').agg({'V4720' : 'mean'})
+amostra.groupby('V0404').agg({'V4720' : 'mean'})
+amostra.groupby(['V0404', 'V0302']).agg({'V4720' : 'mean'})
+
+## Interacao entre idade e renda
+plt.figure(figsize=(10,5))
+plt.scatter(amostra.V8005, amostra.V4720)
+plt.xlabel('Idade')
+plt.ylabel('Média da renda')
+plt.show()
